@@ -101,48 +101,20 @@ int main(void)
     Error_Handler();
   }
   /* USER CODE BEGIN 2 */
-
-  // Read ID
-//  uint8_t JEDEC_ID[3] = {0,0,0};
-//  W25q64_Read_JEDEC_ID(JEDEC_ID);
-
-  // Read Status Reg
-//  uint8_t status_reg = 0;
-//  W25q64_Read_Status_Register(&status_reg,1);
-//  W25q64_Read_Status_Register(&status_reg,2);
-//  W25q64_Read_Status_Register(&status_reg,3);
-
-  uint32_t read_address = 0x00;
-//  W25q64_Read_Byte(&byte_read,read_address);
-//  W25q64_Write_Byte(24,read_address);
-//  W25q64_Read_Byte(&byte_read,read_address);
-//  W25q64_Write_Byte(15,read_address);
-//  W25q64_Read_Byte(&byte_read,read_address);
-
-  read_address = 0x33;
-  uint8_t byte_write = 24;
+  uint32_t read_address = 0x33;
+  uint8_t byte_write = 19;
   uint8_t read_value = 0;
 
-  W25q64_Sector_Erase(0x01);
-  W25q64_Read_Byte(&read_value,read_address);
-  W25q64_Write_Byte(byte_write, read_address);
-  W25q64_Read_Byte(&read_value,read_address);
+//  uint32_t tickstart = HAL_GetTick();
+//  uint32_t timecount = HAL_GetTick() - tickstart;
 
-//  W25qxx_WriteByte(byte_write+5, read_address);
-//  W25qxx_ReadByte(&read_value2,read_address);
-
-//  uint8_t test = 0;
-//  test = W25qxx_ReadStatusRegister(1);
-//  test = W25qxx_ReadStatusRegister(2);
-//  test = W25qxx_ReadStatusRegister(3);
-//  uint8_t pBuffer = 99;
-//  W25qxx_WriteByte(31, 90);
-//  W25qxx_ReadByte(&pBuffer,90);
-//  W25qxx_WriteByte(40, 90);
-//  W25qxx_ReadByte(&pBuffer,90);
+  W25q64_Sector_Erase(0x00);
+//  W25q64_Chip_Erase();
 
 
-
+  W25q64_Read_Byte(&read_value,0x2);
+  W25q64_Write_Byte(byte_write, 0x2);
+  W25q64_Read_Byte(&read_value,0x2);
   /* USER CODE END 2 */
 
   /* Infinite loop */
