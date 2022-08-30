@@ -96,16 +96,38 @@ void W25q64_Read_Byte(uint8_t *pBuffer,uint32_t Bytes_Address)
 	HAL_GPIO_WritePin(pin_cs_GPIO_Port,pin_cs_Pin,GPIO_PIN_SET);
 
 }
-//void W25q64_Read_Multi_Bytes(uint8_t *pBuffer,uint32_t Bytes_Address,uint16_t num_to_read)
-//{
-//	uint8_t CMD_id = 0x03;
-//	uint8_t CMD[4] = {CMD_id,(Bytes_Address & 0xFF0000) >> 16,(Bytes_Address& 0xFF00) >> 8,Bytes_Address & 0xFF};
-//
-//	HAL_GPIO_WritePin(pin_cs_GPIO_Port,pin_cs_Pin,GPIO_PIN_RESET);
-//	HAL_SPI_Transmit(&hspi1,CMD,4,10);
-//	HAL_SPI_Receive(&hspi1,pBuffer,num_to_read,10);
-//	HAL_GPIO_WritePin(pin_cs_GPIO_Port,pin_cs_Pin,GPIO_PIN_SET);
-//}
+void W25q64_Read_Multi_Bytes(uint8_t *pBuffer,uint32_t Bytes_Address,uint16_t num_to_read)
+{
+	uint8_t CMD_id = 0x03;
+	uint8_t CMD[4] = {CMD_id,(Bytes_Address & 0xFF0000) >> 16,(Bytes_Address& 0xFF00) >> 8,Bytes_Address & 0xFF};
+
+	HAL_GPIO_WritePin(pin_cs_GPIO_Port,pin_cs_Pin,GPIO_PIN_RESET);
+	HAL_SPI_Transmit(&hspi1,CMD,4,10);
+	HAL_SPI_Receive(&hspi1,pBuffer,num_to_read,10);
+	HAL_GPIO_WritePin(pin_cs_GPIO_Port,pin_cs_Pin,GPIO_PIN_SET);
+}
+void W25q64_Read_Page_Entire(uint8_t *pBuffer,uint32_t Page_number)
+{
+	uint8_t CMD_id = 0x03;
+	uint32_t Bytes_Address = Page_number *256;
+	uint8_t CMD[4] = {CMD_id,(Bytes_Address & 0xFF0000) >> 16,(Bytes_Address& 0xFF00) >> 8,Bytes_Address & 0xFF};
+
+	HAL_GPIO_WritePin(pin_cs_GPIO_Port,pin_cs_Pin,GPIO_PIN_RESET);
+	HAL_SPI_Transmit(&hspi1,CMD,4,10);
+	HAL_SPI_Receive(&hspi1,pBuffer,256,100);
+	HAL_GPIO_WritePin(pin_cs_GPIO_Port,pin_cs_Pin,GPIO_PIN_SET);
+}
+void W25q64_Read_Sector_Entire(uint8_t *pBuffer,uint32_t Sector_number)
+{
+	uint8_t CMD_id = 0x03;
+	uint32_t Bytes_Address = Sector_number *4096;
+	uint8_t CMD[4] = {CMD_id,(Bytes_Address & 0xFF0000) >> 16,(Bytes_Address& 0xFF00) >> 8,Bytes_Address & 0xFF};
+
+	HAL_GPIO_WritePin(pin_cs_GPIO_Port,pin_cs_Pin,GPIO_PIN_RESET);
+	HAL_SPI_Transmit(&hspi1,CMD,4,10);
+	HAL_SPI_Receive(&hspi1,pBuffer,4096,100);
+	HAL_GPIO_WritePin(pin_cs_GPIO_Port,pin_cs_Pin,GPIO_PIN_SET);
+}
 //
 //void W25q64_Read_Page(uint8_t *pBuffer,uint32_t Page_Number)
 //{
@@ -147,42 +169,43 @@ void W25q64_Write_Byte(uint8_t write_data,uint32_t Bytes_Address)
 	uint8_t CMD[5] = {CMD_id,(Bytes_Address & 0xFF0000) >> 16,(Bytes_Address& 0xFF00) >> 8,Bytes_Address & 0xFF,write_data};
 	W25q64_Write_Enable();
 
+	W25q64_Sector_Erase(Bytes_Address/4096);
+
 	HAL_GPIO_WritePin(pin_cs_GPIO_Port,pin_cs_Pin,GPIO_PIN_RESET);
 	HAL_SPI_Transmit(&hspi1,CMD,5,100);
 	HAL_GPIO_WritePin(pin_cs_GPIO_Port,pin_cs_Pin,GPIO_PIN_SET);
 
 	W25q64_Wait_Writing_Finish();
 }
-//void W25q64_Write_Multi_Bytes(uint8_t *write_data,uint32_t Bytes_Address,uint32_t length)
-//{
-//	uint8_t CMD_id = 0x02;
-//	uint8_t CMD[4+length];
-//	CMD[0] = CMD_id;
-//	CMD[1] = (Bytes_Address & 0xFF0000) >> 16;
-//	CMD[2] = (Bytes_Address& 0xFF00) >> 8;
-//	CMD[3] = Bytes_Address & 0xFF;
-//
-//	for (int i = 0; i < length; ++i)
-//	{
-//		CMD[4+i] = write_data[i];
-//	}
-//
-//	W25q64_Write_Enable();
-//	HAL_GPIO_WritePin(pin_cs_GPIO_Port,pin_cs_Pin,GPIO_PIN_RESET);
-//	HAL_SPI_Transmit(&hspi1,CMD,length+4,10);
-//	HAL_GPIO_WritePin(pin_cs_GPIO_Port,pin_cs_Pin,GPIO_PIN_SET);
-//}
-//void W25q64_Write_Page(uint8_t write_data,uint32_t Bytes_Address)
-//{
-//	uint8_t CMD_id = 0x02;
-//	uint8_t CMD[5] = {CMD_id,(Bytes_Address & 0xFF0000) >> 16,(Bytes_Address& 0xFF00) >> 8,Bytes_Address & 0xFF,write_data};
-//	W25q64_Write_Enable();
-//
-//	HAL_GPIO_WritePin(pin_cs_GPIO_Port,pin_cs_Pin,GPIO_PIN_RESET);
-//	HAL_SPI_Transmit(&hspi1,CMD,5,10);
-//	HAL_GPIO_WritePin(pin_cs_GPIO_Port,pin_cs_Pin,GPIO_PIN_SET);
-//}
-//
+void W25q64_Write_Page_Entire(uint8_t *write_data,uint32_t Page_number)
+{
+	uint8_t CMD_id = 0x02;
+	uint32_t Bytes_Address = Page_number *256;
+	uint8_t CMD[260];
+
+	CMD[0] = CMD_id;
+	CMD[1] = (Bytes_Address & 0xFF0000) >> 16;
+	CMD[2] = (Bytes_Address& 0xFF00) >> 8;
+	CMD[3] = Bytes_Address & 0xFF;
+	for (int i = 0; i < 256; ++i){ CMD[i+4] = write_data[i]; }
+
+	W25q64_Write_Enable();
+	HAL_GPIO_WritePin(pin_cs_GPIO_Port,pin_cs_Pin,GPIO_PIN_RESET);
+	HAL_SPI_Transmit(&hspi1,CMD,260,10);
+	HAL_GPIO_WritePin(pin_cs_GPIO_Port,pin_cs_Pin,GPIO_PIN_SET);
+	W25q64_Wait_Writing_Finish();
+}
+void W25q64_Write_Sector_Entire(uint8_t *write_data,uint32_t Sector_number)
+{
+	uint32_t page = Sector_number*16;
+
+	W25q64_Sector_Erase(Sector_number);
+	for (int i = 0; i < 16; ++i)
+	{
+		W25q64_Write_Page_Entire( write_data + i*256,page);
+		page++;
+	}
+}
 //void W25q64_Write_Sector(uint8_t *write_data,uint32_t Sector_Number)
 //{
 //	uint8_t CMD_id = 0x02;

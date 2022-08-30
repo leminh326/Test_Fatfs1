@@ -101,20 +101,50 @@ int main(void)
     Error_Handler();
   }
   /* USER CODE BEGIN 2 */
-  uint32_t read_address = 0x33;
-  uint8_t byte_write = 19;
-  uint8_t read_value = 0;
+  HAL_Delay(100);
+  uint32_t tickstart = 0;
+  uint32_t timecount = 0;
+//  tickstart = HAL_GetTick();
+//  timecount = HAL_GetTick() - tickstart;
 
-//  uint32_t tickstart = HAL_GetTick();
-//  uint32_t timecount = HAL_GetTick() - tickstart;
+//  W25q64_Write_Page_Entire(write_data,0);
+//  W25q64_Read_Page_Entire(read_data,0);
 
-  W25q64_Sector_Erase(0x00);
-//  W25q64_Chip_Erase();
+  uint8_t write_data[4096];
+  uint8_t read_data[4096];
+  for (int i = 0; i < 4096; ++i){write_data[i] = i%256;}
+  for (int i = 0; i < 4096; ++i){read_data[i] = 1;}
 
+  tickstart = HAL_GetTick();
+  W25q64_Read_Sector_Entire(read_data,0);
+  timecount = HAL_GetTick() - tickstart;
 
-  W25q64_Read_Byte(&read_value,0x2);
-  W25q64_Write_Byte(byte_write, 0x2);
-  W25q64_Read_Byte(&read_value,0x2);
+  tickstart = HAL_GetTick();
+  W25q64_Write_Sector_Entire(write_data,0);
+  timecount = HAL_GetTick() - tickstart;
+
+  tickstart = HAL_GetTick();
+  W25q64_Read_Sector_Entire(read_data,0);
+  timecount = HAL_GetTick() - tickstart;
+
+  for (int i = 0; i < 4096; ++i){write_data[i] = 256-(i%256);}
+  tickstart = HAL_GetTick();
+  W25q64_Write_Sector_Entire(write_data,0);
+  timecount = HAL_GetTick() - tickstart;
+
+  tickstart = HAL_GetTick();
+  W25q64_Read_Sector_Entire(read_data,0);
+  timecount = HAL_GetTick() - tickstart;
+
+  for (int i = 0; i < 4096; ++i){write_data[i] = i%256;}
+
+  tickstart = HAL_GetTick();
+  W25q64_Write_Sector_Entire(write_data,0);
+  timecount = HAL_GetTick() - tickstart;
+
+  tickstart = HAL_GetTick();
+  W25q64_Read_Sector_Entire(read_data,0);
+  timecount = HAL_GetTick() - tickstart;
   /* USER CODE END 2 */
 
   /* Infinite loop */

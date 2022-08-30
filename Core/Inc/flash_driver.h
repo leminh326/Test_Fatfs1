@@ -17,6 +17,7 @@ void W25q64_Chip_Erase();
 
 // Read
 void W25q64_Read_Byte(uint8_t *pBuffer,uint32_t Bytes_Address);
+void W25q64_Read_Sector_Entire(uint8_t *pBuffer,uint32_t Sector_number);
 //void W25q64_Fast_Read_Byte(uint8_t *pBuffer,uint32_t Bytes_Address);
 //void W25q64_Read_Multi_Bytes(uint8_t *pBuffer,uint32_t Bytes_Address,uint16_t num_to_read);
 //void W25q64_Read_Page(uint8_t *pBuffer,uint32_t Page_Number);
@@ -24,8 +25,7 @@ void W25q64_Read_Byte(uint8_t *pBuffer,uint32_t Bytes_Address);
 
 // Write
 void W25q64_Write_Byte(uint8_t write_data,uint32_t Bytes_Address);
-//void W25q64_Write_Page(uint8_t write_data,uint32_t Bytes_Address);
-
+void W25q64_Write_Sector_Entire(uint8_t *write_data,uint32_t Sector_number);
 
 
 #endif
