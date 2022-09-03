@@ -63,7 +63,11 @@ static void MX_SPI1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+extern FATFS USERFatFs;    /* File system object for USER logical drive */
+extern FIL USERFile;       /* File  object for USER */
+extern char USERPath[4];   /* USER logical drive path */
 
+bool Comparer_Sector(uint8_t *compare_array, uint32_t sector_number);
 /* USER CODE END 0 */
 
 /**
@@ -101,50 +105,51 @@ int main(void)
     Error_Handler();
   }
   /* USER CODE BEGIN 2 */
-  HAL_Delay(100);
-  uint32_t tickstart = 0;
-  uint32_t timecount = 0;
-//  tickstart = HAL_GetTick();
-//  timecount = HAL_GetTick() - tickstart;
+  uint8_t wtext[] = "text to write logical disk"; /* File write buffer */
+  uint8_t rtext[_MAX_SS];/* File read buffer */
+  uint32_t byteswritten, bytesread; /* File write/read counts */
+  uint32_t tickstart = HAL_GetTick();
+  uint32_t duration = HAL_GetTick() - tickstart;
 
-//  W25q64_Write_Page_Entire(write_data,0);
-//  W25q64_Read_Page_Entire(read_data,0);
+  FRESULT fat_result = FR_NO_FILESYSTEM;
+  fat_result = f_mount(&USERFatFs, (TCHAR const*)USERPath, 0);
+  fat_result = f_mkfs((TCHAR const*)USERPath, FM_ANY, 4096, rtext, sizeof(rtext));
 
-  uint8_t write_data[4096];
-  uint8_t read_data[4096];
-  for (int i = 0; i < 4096; ++i){write_data[i] = i%256;}
-  for (int i = 0; i < 4096; ++i){read_data[i] = 1;}
-
+  // Create File
   tickstart = HAL_GetTick();
-  W25q64_Read_Sector_Entire(read_data,0);
-  timecount = HAL_GetTick() - tickstart;
+  fat_result = f_open(&USERFile, "STM32.TXT", FA_CREATE_ALWAYS | FA_WRITE );
+  fat_result = f_write(&USERFile, wtext, strlen((char *)wtext), (void *)&byteswritten);
+  f_close(&USERFile);
+  duration = HAL_GetTick() - tickstart;
 
+  // Read File
   tickstart = HAL_GetTick();
-  W25q64_Write_Sector_Entire(write_data,0);
-  timecount = HAL_GetTick() - tickstart;
+  uint8_t read_data[1000];
+  uint8_t number_read =1000;
+  fat_result = f_open(&USERFile, "STM32.TXT", FA_READ);
+  fat_result = f_read(&USERFile, read_data, sizeof(read_data), (UINT*)&bytesread);
+  duration = HAL_GetTick() - tickstart;
 
-  tickstart = HAL_GetTick();
-  W25q64_Read_Sector_Entire(read_data,0);
-  timecount = HAL_GetTick() - tickstart;
 
-  for (int i = 0; i < 4096; ++i){write_data[i] = 256-(i%256);}
-  tickstart = HAL_GetTick();
-  W25q64_Write_Sector_Entire(write_data,0);
-  timecount = HAL_GetTick() - tickstart;
+//  Test_Flash(); HAL_Delay(100);
+//
+//  uint32_t wbytes; /* File write counts */
+//  uint8_t wtext[] = "text to write logical disk"; /* File write buffer */
+////  uint8_t wbuffer[32768] ; /* working buffer */c
+//  uint8_t rtext[_MAX_SS];/* File read buffer */
+//
+//  FRESULT fat_result = FR_NO_FILESYSTEM;
+//  fat_result = f_mount(&USERFatFs, (TCHAR const*)USERPath, 0);
+//  HAL_Delay(100);
+//  fat_result = f_mkfs((TCHAR const*)USERPath, FM_ANY, 4096, rtext, sizeof(rtext));
+//  HAL_Delay(100);
+//  fat_result = f_open(&USERFile, "STM32.TXT", FA_CREATE_ALWAYS | FA_WRITE);
+//
+//  Test_Flash2();
+//  FATFS_UnLinkDriver(USERPath);
 
-  tickstart = HAL_GetTick();
-  W25q64_Read_Sector_Entire(read_data,0);
-  timecount = HAL_GetTick() - tickstart;
 
-  for (int i = 0; i < 4096; ++i){write_data[i] = i%256;}
 
-  tickstart = HAL_GetTick();
-  W25q64_Write_Sector_Entire(write_data,0);
-  timecount = HAL_GetTick() - tickstart;
-
-  tickstart = HAL_GetTick();
-  W25q64_Read_Sector_Entire(read_data,0);
-  timecount = HAL_GetTick() - tickstart;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -407,6 +412,46 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void Test_Flash1(uint32_t sector_number)
+{
+  /* USER CODE BEGIN Error_Handler_Debug */
+
+	  uint8_t write_data[4096];
+	  uint8_t read_data[4096];
+	  for (int i = 0; i < 4096; ++i){write_data[i] = i%256;}
+	  for (int i = 0; i < 4096; ++i){read_data[i] = 1;}
+
+	  W25q64_Read_Sector_Entire(read_data,sector_number);
+	  W25q64_Write_Sector_Entire(write_data,sector_number);
+//	  W25q64_Sector_Erase(sector_number);
+	  W25q64_Read_Sector_Entire(read_data,sector_number);
+  /* USER CODE END Error_Handler_Debug */
+}
+
+void Test_Flash2(void)
+{
+  /* USER CODE BEGIN Error_Handler_Debug */
+	  uint8_t read_data[4096];
+	  for (int i = 0; i < 4096; ++i){read_data[i] = 1;}
+	  W25q64_Read_Sector_Entire(read_data,0);
+  /* USER CODE END Error_Handler_Debug */
+}
+
+bool Comparer_Sector(uint8_t *compare_array, uint32_t sector_number)
+{
+	bool check_value = true;
+	uint8_t read_data[4096];
+
+	for (int i = 0; i < 4096; ++i){read_data[i] = 99;}
+	W25q64_Read_Sector_Entire(read_data,sector_number);
+
+	for (int i = 0; i < 4096; ++i)
+	{
+		if (read_data[i] != compare_array[i]) {check_value = false;}
+	}
+
+	return check_value;
+}
 
 /* USER CODE END 4 */
 

@@ -82,7 +82,9 @@ DSTATUS USER_initialize (
 )
 {
   /* USER CODE BEGIN INIT */
-    Stat = STA_NOINIT;
+	Stat = STA_NOINIT;
+	// write your own code here to initialize the drive
+	Stat &= ~STA_NOINIT;
     return Stat;
   /* USER CODE END INIT */
 }
@@ -97,7 +99,7 @@ DSTATUS USER_status (
 )
 {
   /* USER CODE BEGIN STATUS */
-    Stat = STA_NOINIT;
+    Stat = ~STA_NOINIT;
     return Stat;
   /* USER CODE END STATUS */
 }
@@ -118,6 +120,23 @@ DRESULT USER_read (
 )
 {
   /* USER CODE BEGIN READ */
+    uint16_t read_count = 0;
+	if (count == 1)
+	{
+		/* READ_SINGLE_BLOCK */
+		W25q64_Read_Sector_Entire(buff,sector);
+		count = 0;
+	}
+	else
+	{
+		/* READ_MULTIPLE_BLOCK */
+		do {
+			W25q64_Read_Sector_Entire(buff,sector+read_count);
+			buff += 4096;
+			read_count++;
+		} while (--count);
+	}
+
     return RES_OK;
   /* USER CODE END READ */
 }
@@ -140,6 +159,25 @@ DRESULT USER_write (
 {
   /* USER CODE BEGIN WRITE */
   /* USER CODE HERE */
+
+	uint16_t write_count = 0;
+  /* USER CODE BEGIN READ */
+	if (count == 1)
+	{
+		/* WRITE_SINGLE_BLOCK */
+		W25q64_Write_Sector_Entire(buff,sector);
+		count = 0;
+	}
+	else
+	{
+		/* WRITE_MULTIPLE_BLOCK */
+		do {
+			W25q64_Write_Sector_Entire(buff,sector+write_count);
+			buff += 4096;
+			write_count++;
+		} while (--count);
+	}
+
     return RES_OK;
   /* USER CODE END WRITE */
 }
@@ -161,6 +199,50 @@ DRESULT USER_ioctl (
 {
   /* USER CODE BEGIN IOCTL */
     DRESULT res = RES_ERROR;
+
+
+// CTRL_SYNC		0	/* Complete pending write process (needed at _FS_READONLY == 0) */
+// GET_SECTOR_COUNT	1	/* Get media size (needed at _USE_MKFS == 1) */
+// GET_SECTOR_SIZE	2	/* Get sector size (needed at _MAX_SS != _MIN_SS) */
+// GET_BLOCK_SIZE	3	/* Get erase block size (needed at _USE_MKFS == 1) */
+// CTRL_TRIM		4	/* Inform device that the data on the block of sectors is no longer used (needed at _USE_TRIM == 1) */
+
+    switch(cmd)
+    {
+        case CTRL_SYNC:
+        	res = RES_OK;
+            break;
+
+        /* Get number of sectors on the disk (DWORD) */
+        case GET_SECTOR_COUNT:
+//        	*(DWORD*)buff = 2048;
+        	*(DWORD*)buff = 2048;
+            break;
+
+        /* Get R/W sector size (WORD) */
+        case GET_SECTOR_SIZE:
+//        	*(WORD*) buff = 4096;
+        	*(WORD*) buff = 4096;
+            break;
+
+        /* Get erase block size in unit of sector (DWORD) */
+        case GET_BLOCK_SIZE:
+//        	*(DWORD*)buff = 2048;
+//        	*(DWORD*)buff = 32768;
+        	*(DWORD*)buff = 1;
+            break;
+
+        case CTRL_TRIM:
+        	res = RES_OK;
+            break;
+
+        default:
+            ;
+    }
+
+    res = RES_OK;
+
+
     return res;
   /* USER CODE END IOCTL */
 }
